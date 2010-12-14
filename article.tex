@@ -4,13 +4,13 @@
 \usepackage{amssymb}
 \usepackage{amsmath}
 \usepackage{booktabs}
+\usepackage{textcomp}
 
 \newcommand{\vect}[1] %vector notation
 {{\bf {#1}}}
 \newcommand{\npoly}{$n$-polytope}
 \newcommand{\citepp}[4] %double parenthesis cite
 {(\citealp[{#1}]{{#2}}; \citealp[{#3}]{{#4}})}
-\newcommand{\degrees}[1]{^{\circ}\text{{#1}}} %degree symbol
 \newcommand{\bpm}{\begin{pmatrix}} %for matrix notation
 \newcommand{\epm}{\end{pmatrix}}
 
@@ -290,10 +290,10 @@ Table~\ref{tab:columnopcon} lists the operating conditions of the distillation c
     \cmidrule(r){3-4} \cmidrule(r){5-6}
     && Low & High & Low & High \\ 
     \midrule
-    Inputs &$R~(\text{mA})$          & 11 & 15 & 4 & 20 \\
-           &$T_{10~sp}~(\degrees{C})$ & 78 & 82 & 25 & 90 \\[1.3ex]
-    Outputs &$T_1~(\degrees{C})$     & 66 & 68 & 15 & 68 \\
-            &$T_{8}~(\degrees{C})$   & 78 & 82 & 25 & 90 \\
+    Inputs &$R$ (mA)          & 11 & 15 & 4 & 20 \\
+           &$T_{10~sp}$ (\textcelsius) & 78 & 82 & 25 & 90 \\[1.3ex]
+    Outputs &$T_1$ (\textcelsius)     & 66 & 68 & 15 & 68 \\
+            &$T_{8}$ (\textcelsius)   & 78 & 82 & 25 & 90 \\
     \bottomrule
   \end{tabular}
   \caption{Operating conditions of the laboratory distillation column.}
@@ -317,7 +317,7 @@ The DOS, as described by the operating range of the outputs, is also shown in fi
 
 Figure~\ref{fig:columnaisaos}(c) focuses on the intersection of the AOS and the DOS.
 The calculated OI is 0.006 which confirms that only a very small operating region within the DOS is attainable.
-It is also clear that the upper limit of 82$\degrees{C}$ on $T_8$ is unrealistic as the maximum value of $T_8$ (in the desired operating region) is only 78.2$\degrees{C}$.
+It is also clear that the upper limit of 82~\textcelsius\ on $T_8$ is unrealistic as the maximum value of $T_8$ (in the desired operating region) is only 78.2~\textcelsius.
 
 \subsection{Constraint types}
 The AIS of the distillation column consists of physical and operational constraints.
@@ -353,8 +353,8 @@ Rather than using the high and low limits shown in figure~\ref{fig:columnfitbox}
 This set of constraints need to be reformatted to be compatible with commercial MPC packages, as they only accept high and low limits on variables.
 
 The dark triangle in figure~\ref{fig:columnfitbox} represents the constraints defining the intersection.
-An unmeasured variable needs to be added to the process model to implement the diagonal constraint ($0.88T_8-0.47T_1\leq 36.56\degrees{C}$).
-Naming the new output $y_1$ and augmenting the process model matrix as shown in equation~\ref{eq:columnnewmodel} allows for the diagonal (linear) constraint to be expressed simply as {$y_1~\leq~36.56\degrees{C}$}.
+An unmeasured variable needs to be added to the process model to implement the diagonal constraint ($0.88T_8-0.47T_1\leq 36.56$~\textcelsius).
+Naming the new output $y_1$ and augmenting the process model matrix as shown in equation~\ref{eq:columnnewmodel} allows for the diagonal (linear) constraint to be expressed simply as {$y_1~\leq~36.56$~\textcelsius}.
 \begin{equation}
   \label{eq:columnnewmodel}
   G_{new}= \bpm -0.0575 & 0.96 \\       % T1
@@ -399,7 +399,7 @@ The modelling interfaces (figures and ) are used to augment the model for the ad
 
 
 \section{Conclusions}\label{sec:conclusions}
-Form the proposed method of systematic constraint handling and the illustrative example, a few conclusions can be drawn.
+From the proposed method of systematic constraint handling and the illustrative example, a few conclusions can be drawn.
 The results obtained by the method are readily applicable to commercial MPCs.
 
 The specification of unrealistic constraints lead to a low Operability Index and unattainable expectations of both the inputs and outputs of the process.
