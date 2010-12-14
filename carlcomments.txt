@@ -1,0 +1,23 @@
+Much remains to be done here.  This seems more like an article sketch
+than a finished product.  Remember that the article reports on a
+particular application of useful results, and is not meant to be an
+overall summary of the results of an entire master's dissertation.
+
+Particular points:
+
+Your overview of process operability measures needs to be reworked
+significantly to avoid looking like a thrown-together list of Google
+hits on operability.  Ideally the methods would be ordered in some
+logical way (chronological, computational effort, etc) and discussed
+in that order pointing out pros and cons, culminating in the geometric
+approach suggestion which addresses some of the cons discussed at the
+cost of simplicity.
+
+Many sections suffer from this lack of flow - especially the
+conclusions.  Make sure you tie up the conclusions and the abstract.
+
+Nits: 
+
+There are several concorde errors.  Make sure that you use the plural
+when multiple authors are named in your citation.  Read the PDF as
+well, as the LaTeX code often makes these errors difficult to spot.
