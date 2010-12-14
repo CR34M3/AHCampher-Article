@@ -42,7 +42,6 @@ A rigorous and systematic approach to constraint management is proposed, buildin
 The method focuses on linear steady-state system models, and provides routines to obtain the following information; effects of constraint changes on the corresponding input or output constraints, feasibility checks for constraints, constraint-type information, specification of constraint-set size and optimal fitting of constraints within the desirable input or output space.
 
 Mathematical rigour and unambiguous language for identifying constraint types were key design criteria. 
-Ample feedback to the user was added to provide a supportive rather than prescriptive environment.
 The application of the method is illustrated for a laboratory scale distillation column running commercial MPC packages.
 \end{abstract}
 
@@ -98,8 +97,7 @@ Steady-state operability measures include; the relative gain array (RGA) is one 
 \citet{artrdg} defines the RDG, which expands on the RGA to include the effect of disturbances. 
 The Niederlinski index is another measure that uses only steady-state gains of the process model \citep[572-573]{luyben}. 
 Singular value decomposition stems from the use of eigenvalues as an operability measure. 
-The use of singular values are preferred as eigenvalues are a poor
-measure of gain and can often be misleading \citep[75]{skogestad}.
+The use of singular values are preferred as eigenvalues are a poor measure of gain and can often be misleading \citep[75]{skogestad}.
 Maximum and minimum singular values are mostly used to select controlled variables but can also be used as a performance measure along with the condition number \citepp{596}{luyben}{80-82}{skogestad}.
 
 To include the effect of system dynamics, the RGA can be expanded to contain frequency-dependant terms and is often referred to as the dynamic relative gain array (DRGA) \citep[637]{marlin}. 
