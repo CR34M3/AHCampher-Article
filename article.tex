@@ -220,13 +220,13 @@ Mapping input constraints, via the model, to their corresponding output constrai
 
 \subsection{Constraint set fitting}\label{sec:setfit}
 As shown by \citet{vinsonartoi} -- by means of the Operability Index -- a larger operating region is advantageous for control.
-Fitting a constraint set within the AOS/DOS intersection (whilst maximising its volume) will increase the OI and yield feasible constraints.
+Fitting a constraint set within the AOS/DOS intersection (while maximising its volume) will increase the OI and yield feasible constraints.
 \subsubsection{High and low limits}
 The most common method of specifying constraints for commercial MPCs is using high and low limits.
 Fitting the maximal volume set of these constraints within the AOS/DOS intersection increases the OI, yields constraints and an operating region that is completely feasible, and is directly applicable to commercial MPC packages.
 \subsubsection{Set reduction}
 The constraints specifying the AOS/DOS intersection correspond to the largest feasible operating region.
-The control problem can be reduced by fitting a set with less constraints therein, whilst maximising the operating region of the fitted set.
+The control problem can be reduced by fitting a set with less constraints therein, while maximising the operating region of the fitted set.
 The fitted set will contain linear constraints that need to be added to the process matrix as unmeasured variables (see section~\ref{sec:lincons}).
 Therefore, the reduction in the control problem does not stem from the amount of variables, but from the decreased amount of constraints that the solution will now be subject to.
 
@@ -365,7 +365,7 @@ Naming the new output $y_1$ and augmenting the process model matrix as shown in 
 \subsubsection{Set reduction}
 When the intersection of the DOS and AOS contains many facets (as is typically the case for higher order systems), a large increase in model variables as well as constraints are needed to describe the complete intersection.
 
-In this case, fitting a constraint set with fewer constraints than the original intersection, whilst still maximising the operational region, can be considered.
+In this case, fitting a constraint set with fewer constraints than the original intersection, while still maximising the operational region, can be considered.
 Whilst not illustrated in this paper, it is intuitive that the fraction of the intersection that will be covered is less than 1.
 The set reduction procedure therefore becomes a trade-off between the operability obtained and the simplification of the control problem.
 
@@ -413,7 +413,7 @@ The constraints describing this intersection are usually linear combinations of 
 An unmeasured variable (resultant from the linear constraint) is added to the process model, and high and low constraints are imposed thereon.
 
 The fitting of a constraint set within the AOS/DOS intersection leads to an operating region that is completely feasible in both the input and output space.
-The size of a constraint set can be reduced by fitting a smaller set within, whilst maximising the operating region of the fitted set.
+The size of a constraint set can be reduced by fitting a smaller set within, while maximising the operating region of the fitted set.
 This reduces the control problem by reducing the number of active constraints on the system.
 
 Finally, when constraint changes are made (during operation or design), checking changes to constraints via the process model allows for a measure of clamping to be determined.
