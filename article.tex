@@ -1,6 +1,10 @@
 %\documentclass[preprint,authoryear,12pt]{elsarticle}
 \documentclass[final,authoryear,5pt,times,twocolumn]{elsarticle}
 
+\usepackage{tikz}
+\usepackage{pgfplots}
+%TODO - remove \usepackage (convert images to pdf/eps)
+
 \usepackage{amssymb}
 \usepackage{amsmath}
 \usepackage{booktabs}
@@ -57,16 +61,17 @@ constraint handling \sep model predictive control \sep geometric methods \sep op
 %% ==== BODY ====
 \section{Introduction}\label{sec:intro}
 The ability of some MPC algorithms to impose constraints on the outputs or inputs of a system is their biggest selling point.
-Just as the process model predicts the effect of the inputs on the outputs, the constraints on the system are also interdependent (via the model).
+Just as the process model predicts the effect of the inputs on the outputs, the constraints imposed on the system are also interdependent (via the process model).
+
 At present, commercial MPC packages only validate constraints against high and low limits set by external engineering criteria that are not based on the process model.
-This gives rise to the following problems, both of which could result in infeasible controllers;
+This gives rise to the following problems, both of which could result in infeasible controllers and unrealistic control expectations:
 \begin{itemize}
   \item Specified constraints on an input or output may be infeasible due to their corresponding output or input requirements.
   \item Changing of constraints and the possible clamping of corresponding outputs or inputs are not evident (or quantified).
 \end{itemize}
 
-This paper proposes a method of systematically managing constraints imposed on MPCs.
-Building on the work by \citet{vinsonartoi}, \citet{opconproc} and \citet{limaphd} on constraint interaction, a method like this would help to avoid infeasible constraints and further the understanding of constraint interaction in MPCs.
+This paper proposes a method of systematically managing constraints imposed on MPCs, determining feasible constraints and reformatting them to be directly implemented in commercial MPC structures.
+Building on the work by \citet{vinsonartoi}, \citet{opconproc} and \citet{limaphd} on constraint interaction, a method like this would help avoid infeasible constraints and further the understanding of constraint interaction in MPCs.
 
 Mathematical rigour and unambiguous language when specifying constraints were key design criteria.
 Linear steady-state models are considered along with linear constraints on the inputs and outputs.
@@ -74,91 +79,11 @@ With the scope defined thus, the project can now focus exclusively on convex set
 
 
 \section{Background}\label{sec:background}
-\subsection{Model Predictive Control}
-Since its successful implementation in the petrochemical industry, model predictive control (MPC) has gained widespread acceptance in the processing sector \citep[1]{maciejowskimpc}. 
-This has led to the development of many commercial MPC packages such as DMCplus (Aspentech), RMPCT (Honeywell), Connoisseur (Invensys) and SMOC (Shell Global Solutions) \citep{qinbadgwell}.
-
-The correct choice of model is one of the most important steps in the operation of MPCs \citep[17]{rossiter}.
-This is due to the active use of the model in making predictions as the controller runs, and not serving merely as an analysis aid \citep[37]{maciejowskimpc}.
-
-\subsubsection{Constraints}\label{sec:mpccons}
-Most commercial MPC packages allow only high and low limits to be imposed on outputs or inputs.
-The only validation of these constraints are against an outermost constraint set, often referred to as 'Engineering Limits'.
-This set typically consists of physical limits on inputs and outputs, as well as limits that avoid damage to equipment.
-
-\subsection{Process Operability}
-Process operability is defined as ``the ease with which a process can be operated and controlled'' \citep[778]{marlin}.
-Most process operability measures, however, are merely qualitative \citep[164]{skogestad} .
-
-To place the operability index of \citet{vinsonartoi} into context, a brief overview of the most common process operability techniques is presented below.
-
-\subsubsection{Overview}
-Steady-state operability measures include; the relative gain array (RGA) is one of the most used operability measures \citep[576]{luyben} and relates input and output interactivity.
-\citet{artrdg} defines the RDG, which expands on the RGA to include the effect of disturbances. 
-The Niederlinski index is another measure that uses only steady-state gains of the process model \citep[572-573]{luyben}. 
-Singular value decomposition stems from the use of eigenvalues as an operability measure. 
-The use of singular values are preferred as eigenvalues are a poor measure of gain and can often be misleading \citep[75]{skogestad}.
-Maximum and minimum singular values are mostly used to select controlled variables but can also be used as a performance measure along with the condition number \citepp{596}{luyben}{80-82}{skogestad}.
-
-To include the effect of system dynamics, the RGA can be expanded to contain frequency-dependant terms and is often referred to as the dynamic relative gain array (DRGA) \citep[637]{marlin}. 
-The RDG \citep{artrdg} can be expanded in a similar way to include frequency-dependant terms.
-Nyquist array methods as defined by Rosenbrock, as quoted by \citet[92]{skogestad}, are an extension of the SISO Nyquist stability criteria that include frequency dynamics. 
-The two methods developed are the direct Nyquist array and the inverse Nyquist array. 
-When used in conjunction with Gershgorin bands, conditions for overall stability can be derived \citep[440]{skogestad}.
-
-\citet{vinsonphd} lists other dynamic operability measures which rely on the choice of a controller type. Further shortcomings of the above mentioned operability measures are also discussed in that text. 
-
-\subsubsection{Operability Index}
-The operability index of \citet{vinsonartoi} focuses on input-output relationships rather than a system's dynamic states. 
-Input and output values are defined by spaces (in $\mathbb{R}^n$, with $n$ being the number of inputs or outputs). 
-These spaces are the feasible regions which are bounded by the inequalities describing the ranges of the inputs or outputs. 
-The following spaces are of interest:
-
-Available Input Space (AIS); the set of values that process      inputs can reach. 
-The limits on these values are based on both physical limits (e.g.     valve openings) or process design values (e.g. flow-rates or temperatures). 
-
-Achievable Output Space (AOS); this is the set of values which the process outputs can obtain, given the AIS. 
-The AIS maps to the AOS by means of a process model, $G$. 
-Therefore, a point $u$ in the AIS corresponds to a point $y$ in the AOS via $y=G(u)$. 
-
-Desired Output Space (DOS); this represents the desired output values of the process. 
-These values are typically based on operational and financial   parameters. 
-
-Expected Disturbance Space (EDS); all the values of the expected disturbances to the system. 
-These values are translated back to the input space by means of a disturbance model.
-
-Desired Input Space (DIS); in the same manner that the AIS maps to the AOS, the DIS represents combined reverse mappings of the DOS and EDS.
-The DIS is calculated as the inputs, $u$, that satisfy the model, i.e. $y=G(u,d)$ (with $y$ and $d$ from the DOS and EDS respectively).
-
-\citet{vinsonartoi} proceeds to define the generalised Output Operability Index (OOI) as shown in equation~\ref{eq:oi}. 
-From this definition it is clear that the controlability of a process decreases if the DOS does not cover the whole AOS. 
-Servo- and regulatory operability indices are also defined in the text, but are not shown here.
-\begin{equation}
-  \label{eq:oi}
-     OOI \triangleq \frac{\mu(AOS\cap DOS)}{\mu(DOS)}
-\end{equation}
-where $\mu$ represents a function to calculate the hypervolume of a space.
-
-Numerous authors have illustrated the application of the operability index (OI). 
-\citet{opconproc} focus on a general application of the OI, emphasising its ability to identify inoperable processes without the need to specify a controller structure. 
-\citet{opidealrx} applies the OI to the design of ideal reactors. 
-The analysis of a vinyl acetate reactor produced interesting results
-regarding the mapping of the AIS to the AOS. 
-It was shown that for certain classes of non-linear systems, the AIS boundaries do not map to the boundaries of the AOS.
-
-Although the  operability index can be used with square or non-square, linear or non-linear models, its easiest application is to linear models. 
-This is advantageous as most of the current MPCs use linear models \citep{vinsonphd}.
-
-
 \subsection{Mathematical Preliminaries}
 A few of the mathematical concepts on which the proposed method relies are briefly reviewed in this section.
 
 \subsubsection{Convex geometry}
 A half-space is defined as the section of an $n$-dimensional space lying on one side of an ($n-1$)-dimensional hyperplane \citep[1282]{crcmaths}.
-Linear constraints (as described in equation~\ref{eq:gencons}) are equivalent to half-spaces in $\mathbb{R}^n$ in both their mathematical description and meaning.
-From this we can conclude that all polytopes generated by linear constraints (half-spaces) are convex, as they have supporting hyperplanes at each boundary point \citep[21]{manilev}.
-From this it also follows that the intersection of such convex polytopes will be convex.
-This is due to the resulting intersection being merely a subset of the half-spaces defining the two intersecting polytopes.
 
 The following nomenclature is adopted, following \citet[487]{bayerlee};
 \begin{itemize}
@@ -167,6 +92,11 @@ A polytope of $n$ dimensions will simply be referred to as an $n$-polytope.
 \item vertex - a 0 dimensional face of an \npoly.
 \item facet - an $n-1$ dimensional face of an \npoly.
 \end{itemize}
+
+Linear constraints (as described in equation~\ref{eq:gencons}) are equivalent to half-spaces in $\mathbb{R}^n$ in both their mathematical description and meaning.
+From this we can conclude that all polytopes generated by linear constraints (half-spaces) are convex, as they have supporting hyperplanes at each boundary point \citep[21]{manilev}.
+From this it also follows that the intersection of such convex polytopes will be convex.
+This is due to the resulting intersection being merely a subset of the half-spaces defining the two intersecting polytopes.
 
 \subsubsection{Constraint Formulation}
 Constraints on the inputs ($\vect{u}$) or outputs ($\vect{y}$) of a system can be represented as sets of linear inequalities.
@@ -185,74 +115,179 @@ The change in $\vect{u}_k$ during a sampling instance is now considered thus;
   \text{and}~~ \Delta \vect{u}_k &= \vect{u}_{k+1}-\vect{u}_k
 \end{align*}
 
-\subsubsection{Convex hull and vertex enumeration}
+\subsubsection{Convex hull}
 The convex hull or facet enumeration is used extensively for calculations in this project.
 It is defined as the smallest convex set containing $P$ if $P$ is a set of points ($P \subseteq \mathbb{R}^n$) \citep[74]{wenger}.
-In this paper, $P$ is generated from a set of half-spaces and the resulting vertices (at the intersections that form simplexes) are the minimum vertex description of $P$.
+In this paper, $P$ is constructed from a set of half-spaces resulting in a convex polytope.
 For this reason the convex hull of $P$ and the half-spaces used to generate $P$ are equivalent.
 
 \subsubsection{Process models}
 The steady-state model of a linear system is the gain-matrix.
 This is simply a matrix of constants in $\mathbb{R}$.
 Models like these allow for matrix algebra when transforming between the input and output spaces (and vice versa).
-Obtaining the AOS from the AIS is a linear transformation corresponding to a matrix multiplication of the vertices of the AIS and the process model matrix.
+Obtaining the AOS from the AIS is a linear transformation \citep[48-49,~166]{leung} corresponding to a matrix multiplication of the vertices of the AIS and the process model matrix.
 
 Using linear models, the surface (or boundary) of the input space (a polytope) maps directly to the surface of the output space.
 For this reason, the constraints specifying the input space can be used to generate the output space with full mathematical rigour.
 
 
+\subsection{Model Predictive Control}
+Since its successful implementation in the petrochemical industry, model predictive control (MPC) has gained widespread acceptance in the processing sector \citep[1]{maciejowskimpc}. 
+This has led to the development of many commercial MPC packages such as DMCplus$^{\copyright}$ (Aspentech), RMPCT$^{\copyright}$ (Honeywell), Connoisseur$^{\copyright}$ (Invensys) and SMOC$^{\copyright}$ (Shell Global Solutions) \citep{qinbadgwell}.
+
+The correct choice of model is one of the most important steps in the operation of MPCs \citep[17]{rossiter}.
+This is due to the active use of the model in making predictions as the controller runs, and not serving merely as an analysis aid \citep[37]{maciejowskimpc}.
+
+\subsubsection{Constraints}\label{sec:mpccons}
+The only validation of these constraints are against an outermost constraint set, often referred to as 'Engineering Limits'.
+This set typically consists of physical limits on inputs and outputs, as well as limits that avoid damage to equipment.
+
+Most commercial MPC packages allow only high and low limits to be imposed on outputs or inputs.
+
+\subsection{Process Operability}
+Process operability is defined as ``the ease with which a process can be operated and controlled'' \citep[778]{marlin}.
+Most process operability measures, however, are merely qualitative \citep[164]{skogestad}.
+
+Both steady-state and dynamic operability measures exist and are used.
+Since the operability index of \citet{vinsonartoi} focuses on input-output relationships rather than a system's dynamic states, the most common steady-state process operability techniques are briefly reviewed below.
+\citet{vinsonphd} lists common dynamic operability measures and discuss their shortcomings in detail.
+
+\subsubsection{Overview}
+%1966
+The relative gain array (RGA) is one of the most used operability measures \citep[576]{luyben} and relates input and output interactivity.
+Each element in the RGA ($\beta_{ij}$) is defined as the ratio of the steady-state gain ratios between input, $i$, and output, $j$, when all other inputs and outputs are constant.
+Considering only the magnitudes of RGA elements can be misleading \citep[87]{skogestad}, as seemingly favourable pairings can be unfavourable due to the phase.
+Therefore, both the magnitude and the phase need to be considered or, alternatively, norms such as the RGA-number can be used.
+%1971
+The Niederlinski index is another measure that only uses steady-state gains of the process model \citep[572-573]{luyben}.
+Positive values of the Niederlinski index can correspond to unstable pairings and are therefore inconclusive.
+For this reason, the index is considered necessary but not sufficient for stability \citep[445]{skogestad}.
+Both the RGA and the Niederlinski index have the advantage of requiring little process information \citep[692]{marlin}.
+%1985
+\citet{artrdg} defined the RDG, which expanded on the RGA to include the effect of disturbances.
+This expansion allowed for the calculation of MV saturation limits and system responses for specified load disturbances \citep{vinsonphd}. 
+%1985
+Singular value decomposition stems from the use of eigenvalues as an operability measure. 
+The use of singular values are preferred as eigenvalues are a poor
+measure of gain and can often be misleading \citep[75]{skogestad}.
+Maximum and minimum singular values are mostly used to select controlled variables but can also be used as a performance measure along with the condition number \citepp{596}{luyben}{80-82}{skogestad}.
+
+\subsubsection{Operability Index}
+The Operability Index (OI) of \citet{vinsonartoi} provides a single-number measure of operability which is independent of the implemented control system of a process.
+The framework of the OI also provides direct information about constraints and their relation to the system variables.
+
+Input and output values are defined by spaces (in $\mathbb{R}^n$, with $n$ being the number of inputs or outputs). 
+These spaces are the feasible regions which are bounded by the inequalities describing the ranges of the inputs or outputs. 
+
+The following spaces are of interest:
+\begin{description}
+  \item [Available Input Space (AIS);] the set of values that process      inputs can reach. 
+The limits on these values are based on both physical limits (e.g.     valve openings) or process design values (e.g. flow-rates or temperatures). 
+  \item [Achievable Output Space (AOS);] this is the set of values which the process outputs can obtain, given the AIS. 
+The AIS maps to the AOS by means of a process model, $G$. 
+Therefore, a point $u$ in the AIS corresponds to a point $y$ in the AOS via $y=G(u)$. 
+  \item [Desired Output Space (DOS);] this represents the desired output values of the process. 
+These values are typically based on operational and financial   parameters. 
+  \item [Expected Disturbance Space (EDS);] all the values of the expected disturbances to the system. 
+These values are translated back to the input space by means of a disturbance model.
+  \item [Desired Input Space (DIS);] in the same manner that the AIS maps to the AOS, the DIS represents combined reverse mappings of the DOS and EDS.
+The DIS is calculated as the inputs, $u$, that satisfy the model, i.e. $y=G(u,d)$ (with $y$ and $d$ from the DOS and EDS respectively).
+\end{description}
+
+\citet{vinsonartoi} proceed to define the generalised Output Operability Index (OOI) as shown in equation~\ref{eq:oi}. 
+From this definition it is clear that the controlability of a process decreases if the DOS does not cover the whole AOS. 
+Servo- and regulatory operability indices are also defined in the text, but are not shown here.
+\begin{equation}
+  \label{eq:oi}
+     OOI \triangleq \frac{\mu(AOS\cap DOS)}{\mu(DOS)}
+\end{equation}
+where $\mu$ represents a function to calculate the hypervolume of a space.
+
+Numerous authors have illustrated the application of the operability index. 
+\citet{opconproc} focus on a general application of the OI, emphasising its ability to identify inoperable processes without the need to specify a controller structure. 
+\citet{opidealrx} applies the OI to the design of ideal reactors. 
+The analysis of a vinyl acetate reactor produced interesting results
+regarding the mapping of the AIS to the AOS. 
+It was shown that for certain classes of non-linear systems, the AIS boundaries do not map to the boundaries of the AOS.
+
+Although the operability index can be used with square or non-square, linear or non-linear models, its easiest application is to linear models. 
+This is advantageous as most of the current MPCs use linear models \citep{vinsonphd}.
+
 
 \section{Proposed Method}\label{sec:method}
 
 \subsection{Feasibility}\label{sec:feasibility}
-Commercial MPCs use only their set engineering limits to check the validity of constraints.
-Constraints in the input and output space are interconnected via the process model.
-Along with the engineering constraints (which represent the ultimate bounds) the model should be used to validate constraints \citep{vinsonphd}. 
+Commercial MPCs use only their set engineering limits (which represent the ultimate, usually physical, bounds) to check the validity of constraints.
+Since the input and output constraints are interconnected, the process model should also be used to validate constraints.
 
-Operating regions, such as the DOS, is usually specified using external requirements on the inputs and outputs.
-The validity of such a space should be checked against the attainable regions of the corresponding inputs and outputs.
+Operating regions, such as the DOS, are usually specified using external requirements on the inputs or outputs.
+The validity of such a space should be checked against the attainable regions of the corresponding inputs or outputs.
 In this respect, determining the Operability Index provides a good measure of how valid a specified operating region is.
 
-\subsection{Constraint types}\label{sec:contypes}
-The span of physical limits can only be decreased, operational limits can often be modified to increase process operability.
-Classification of constraints as either physical or operational allows for their changes to be considered.
-Mapping input constraints, via the model, to their corresponding output constraints (or vice versa) allows for the identification of constraints that can or cannot be moved.
+The same argument for feasible constraints apply to setpoints.
+The specification of setpoints should be checked to be within the attainable output space for a given available input space.
 
-\subsection{Constraint set fitting}\label{sec:setfit}
-As shown by \citet{vinsonartoi} -- by means of the Operability Index -- a larger operating region is advantageous for control.
-Fitting a constraint set within the AOS/DOS intersection (while maximising its volume) will increase the OI and yield feasible constraints.
-\subsubsection{High and low limits}
-The most common method of specifying constraints for commercial MPCs is using high and low limits.
-Fitting the maximal volume set of these constraints within the AOS/DOS intersection increases the OI, yields constraints and an operating region that is completely feasible, and is directly applicable to commercial MPC packages.
-\subsubsection{Set reduction}
-The constraints specifying the AOS/DOS intersection correspond to the largest feasible operating region.
-The control problem can be reduced by fitting a set with less constraints therein, while maximising the operating region of the fitted set.
-The fitted set will contain linear constraints that need to be added to the process matrix as unmeasured variables (see section~\ref{sec:lincons}).
-Therefore, the reduction in the control problem does not stem from the amount of variables, but from the decreased amount of constraints that the solution will now be subject to.
+\subsection{MPC interfacing}\label{sec:lincons}
+As most commercial MPC packages only allow for high and low limits to be imposed on variables, constraints that are linear combinations of variables (e.g. $\beta_1 y_1+\beta_2 y_2\leq b_1$) need to be reformatted to conform to this structure.
+
+Adding an unmeasured variable to a system by adding rows to the process matrix is a common technique used with commercial MPCs.
+This same technique can be used to impose linear constraints on outputs or inputs.
+The unmeasured variables added to the process model will have gain constants as determined by the coefficients in the original linear constraint.
+
+Considering a model $G$ for an $n\times m$ system ($n$ inputs, $m$ outputs) and the linear constraints 
+\begin{align}
+  \alpha \vect{u} &\leq b_u\notag\\ 
+  \beta \vect{y} &\leq b_y \notag   
+\end{align}
+where $\alpha$ and $\beta$ are rows of $A_u$ and $A_y$ (equation~\ref{eq:gencons}) respectively, the following applies:
+\begin{itemize}
+\item For an input constraint a row is added to the process model and the new input, $u_{n+1}$ is defined thus:
+\begin{equation}
+  \label{eq:linconinput}
+   u_{n+1} = \alpha
+\end{equation}
+Even though $u_{n+1}$ represents an input constraint, it is strictly speaking an additional output and the number of inputs to the system model remains unchanged. 
+\item For an output constraint a row is added to the process model and the new output, $y_{m+1}$ is defined thus:
+\begin{equation}
+  \label{eq:linconoutput}
+   y_{m+1} = (G'\times\vect{1}_{m\times 1})'\cdot\beta
+\end{equation}
+where $\vect{1}_{m\times 1}$ is a column vector of 1s of length $m$.
+\end{itemize}
+A high or low limit can now simply be applied to this newly added variable, i.e. $u_{n+1}\leq b_u$ and $y_{m+1}\leq b_y$ for the example above.
 
 \subsection{Constraint changes}
-Changing constraints during process operation is a common procedure.
-The effects of constraint changes on their corresponding input or output spaces are, however, neglected in commercial MPCs.
-Checking the reduction (or increase) in size of the available input space for a change in output constraints (or vice versa) should be done.
+During operation or design the constraints on processes can be changed.
+Quantifying the effects of constraint changes on their corresponding spaces are, however, neglected in commercial MPCs.
+The reduction or increase in size of the available input space for a change in output constraints (or vice versa) should be checked and a measure of clamping (or relaxing) of constraints supplied.
 
-To quantify the tightening of the inputs, a slight variation on the Operability Index can be used.
-A ratio of hypervolumes for the original attainable part of the DIS and the attainable part of the new DIS ($DISn$) after a constraint change.
-In mathematical terms;
+To quantify the tightening of the inputs, the OI of \citet{vinsonphd} can be used, although, this fails to address the issue when the DIS is already contained within the AIS; regardless of the size change of the DIS the OI remains at a value of 1.
+Another possibility is a ratio of the hypervolumes of the original attainable part of the DIS and the attainable part of the new DIS ($DISn$).
+This clamping factor ($C$) is shown in equation~\ref{eq:inputclamp}.
 \begin{equation}
   \label{eq:inputclamp}
-  1-\frac{\mu(AIS \cap DISn)}{\mu(AIS \cap DIS)}
+  C = 1-\frac{\mu(AIS \cap DISn)}{\mu(AIS \cap DIS)}
 \end{equation}
 where $\mu$ is a function to calculate the hypervolume of a space.
 
-The same argument for feasible constraints apply to setpoints.
-The specification of setpoints should be checked to be within the attainable output space for a given available output space.
+\subsection{Constraint types}\label{sec:contypes}
+When constraints are considered, and specifically changes to them, the types of constraints present are important.
+This is due to the direction of change allowed by each constraint type.
+The following set of constraint types (based on the sources of constraints) are proposed to disambiguate the specification of constraints.
+\begin{description}
+  \item [Physical constraints] represent the physical limits of the system.
+  Examples are tank levels, valve saturation limits and maximum heat duties.
+  Allowed changes to these constraints are usually one-sided or to the inside of a range.
+  \item [Quality constraints] are concerned with product quality, these constraints are typically determined by external requirements or standards.
+  Strictly speaking, changes to these constraints are allowed in any direction.
+  \item [Operational constraints] are the innermost constraint set used by the MPC controller.
+  These constraints are typically changed using the operator interfaces of MPCs and are contained within their respective variables' physical and quality constraints.
+  \item [Optimisation constraints] are those constraints that are not critical for the control of the plant, but rather the performance and efficiency of the plant as determined by external cost functions.
+  Typically these external cost functions will represent a type of saving, e.g. energy savings or product give-away reduction.
+\end{description}
 
-\subsection{Linear constraints}\label{sec:lincons}
-For the case where constraints that are linear combinations of variable are present, they need to be reformatted to conform to the high and low limit structure used by commercial MPCs.
-
-Linear constraints can be added in the same way that unmeasured variables are added to the process model.
-A new variable is defined -- with gain constants determined by the coefficients in the linear constraint and process model -- and added to the process matrix.
-A high and low limit can now simply be applied to this newly added variable.
+The specification of spaces, in particular the AIS and the DOS, usually consists of a combination of the constraint types mentioned above.
+Commercial MPCs do not typically distinguish between different types of constraints, therefore classifying constraints in this unambiguous manner will further the understanding of a system and help identify which constraints can be modified to change the size or shape of a space.
 
 
 \section{2$\times$2 Distillation Column Example}\label{sec:dist}
@@ -262,15 +297,15 @@ The column is run as a closed system with bottoms and distillate mixed and fed b
 Figure~\ref{fig:columnpfd} shows a simplified process flow diagram of the column.
 \begin{figure}[htbp]
   \centering
-    \includegraphics[width=8cm]{columnpfd.pdf}
+    %\includegraphics[width=8cm]{columnpfd.pdf}
+    \scalebox{1}{\input{columnpfd}}
   \caption[Laboratory distillation column photo and flow diagram]{Laboratory distillation column flow diagram.}
   \label{fig:columnpfd}
 \end{figure}
 
 The process model has been reduced to a $2\times2$ matrix.
-Reflux flowrate ($R$, expressed as the milliamp signal sent to the control valve) and the setpoint of plate 10's temperature ($T_{10~sp}$) are the inputs, and the temperatures of plate 1 and 8 ($T_1\text{ \& }T_{8}$) are the outputs.
-The temperature controller between $T_{10~sp}$ and $Q$ is part of the column's baselayer controls.
-It was added as a safety measure, should the advanced control layer fail.
+Reflux flowrate ($R$, expressed as the milliamp signal to the control valve) and the setpoint of plate 10's temperature ($T_{10~sp}$) are the inputs, with the temperatures of plate 1 and 8 ($T_1\text{ \& }T_{8}$) as the outputs.
+The temperature controller between $T_{10~sp}$ and $Q$ is part of the column's baselayer controls and was added as a safety measure, should the advanced control layer fail.
 
 Equation~\ref{eq:columnmodel} shows the steady-state gain model ($G$) of the column.
 \begin{equation}
@@ -281,6 +316,7 @@ Equation~\ref{eq:columnmodel} shows the steady-state gain model ($G$) of the col
 \end{equation}
 
 Table~\ref{tab:columnopcon} lists the operating conditions of the distillation column.
+The nominal operating point (in the output space) is; 68~\textcelsius\ ($T_1$) and 78~\textcelsius\ ($T_8$).
 \begin{table}[htbp]
   \centering
   \begin{tabular}{llllll}
@@ -307,10 +343,13 @@ The DOS, as described by the operating range of the outputs, is also shown in fi
 
 \begin{figure}[htbp]
   \centering
-    \includegraphics[width=8cm]{columnais.pdf}
+    %\includegraphics[width=8cm]{columnais.pdf}
     %\qquad
-    \includegraphics[width=8cm]{columnaos.pdf}
-    \includegraphics[width=8cm]{columnaosfocus.pdf}
+    %\includegraphics[width=8cm]{columnaos.pdf}
+    %\includegraphics[width=8cm]{columnaosfocus.pdf}
+    \scalebox{1}{\input{columnais}}
+    \scalebox{1}{\input{columnaos}}
+    \scalebox{1}{\input{columnaosfocus}}
   \caption{AIS (a), AOS and DOS (b), and AOS$\cap$DOS (c) showing a very small operating region.}
   \label{fig:columnaisaos}
 \end{figure}
@@ -318,6 +357,55 @@ The DOS, as described by the operating range of the outputs, is also shown in fi
 Figure~\ref{fig:columnaisaos}(c) focuses on the intersection of the AOS and the DOS.
 The calculated OI is 0.006 which confirms that only a very small operating region within the DOS is attainable.
 It is also clear that the upper limit of 82~\textcelsius\ on $T_8$ is unrealistic as the maximum value of $T_8$ (in the desired operating region) is only 78.2~\textcelsius.
+
+\subsubsection{Constraint reformatting}
+The DOS and AOS intersection in figure~\ref{fig:columnaisaos}(b, c) represents the largest desirable operating region for the column.
+This region is described by the following constraints:
+\begin{align*}
+  T_1 &\leq 68\text{~\textcelsius} \\
+  T_8 &\geq 78\text{~\textcelsius} \\
+  0.88T_8-0.47T_1&\leq 36.56\text{~\textcelsius}
+\end{align*}
+
+This set of constraints need to be reformatted to be compatible with commercial MPC packages, as they only accept high and low limits on variables.
+An unmeasured variable needs to be added to the process model to implement the diagonal constraint ($0.88T_8-0.47T_1\leq 36.56$~\textcelsius).
+Defining the new output $y_1$ and augmenting the process model (equation~\ref{eq:columnmodel}) as per equation~\ref{eq:linconoutput} results in the new process model (equation~\ref{eq:columnnewmodel}) shown below. With the new process model defined thus, the diagonal constraint to be expressed simply as {$y_1~\leq~36.56$~\textcelsius}.
+\begin{equation}
+  \label{eq:columnnewmodel}
+  G_{new}= \bpm -0.0575 & 0.96 \\       % T1
+                  -0.146  & 0.518 \\      % T8
+                   0.0956 & 1.30 \\ \epm  %y1
+\end{equation}
+
+
+\subsection{Constraint changes}
+Instead of using the full DOS and AOS intersection, an upper and lower limit constraint set within the intersection could be used (as shown in figure~\ref{fig:columnfitbox}).
+This smaller constraint set will have a clamping effect on the input constraints of the system.
+
+\begin{figure}[htbp]
+  \centering
+    %\includegraphics[width=8cm]{columnfitbox.pdf}
+    \scalebox{1}{\input{columnfitbox}}
+  \caption[Fitted constraints for the laboratory distillation column]{Intersection of AOS and DOS with fitted high and low limits for the column tray temperatures.}
+  \label{fig:columnfitbox}
+\end{figure}
+
+The spaces shown in figure~\ref{fig:columnfitbox} are translated back to the input space as shown in figure~\ref{fig:columnconsinput}(a, b).
+DISi represents the full AOS and DOS intersection in the input space, whereas DOSn represents the newly fitted high and low limits within the AOS and DOS intersection.
+The effect of the constraint change is shown in figure~\ref{fig:columnconsinput}(b) as the transition from the shaded triangular constraint set to the parallelogram shaped dotted set.
+From equation~\ref{eq:inputclamp} this corresponds to a 50\% clamping in the input space.
+
+\begin{figure}[htbp]
+  \centering
+    \scalebox{1}{\input{columninputs}}
+%    \includegraphics[width=8cm]{columninputs.pdf}
+%    \includegraphics[width=8cm]{columninputszoom.pdf}
+    \scalebox{1}{\input{columninputszoom}}
+  \caption{Constraints in the input space for the column (a) and focus on the constraint changes showing input clamping (b).}
+  \label{fig:columnconsinput}
+\end{figure}
+
+Figure~\ref{fig:columnconsinput}(a) also serves to show that the limits of the DOS -- now represented in the input space as the DIS -- are unattainable.
 
 \subsection{Constraint types}
 The AIS of the distillation column consists of physical and operational constraints.
@@ -330,95 +418,19 @@ Decreasing the lower bound on $R$ to 4~mA increases the Operability Index to 0.1
 
 This highlights the importance of constraint and model interaction, as changing the limits on $T_{10~sp}$ (if this were possible) would have no effect on the process operability.
 
-\subsection{Set fitting}
-Returning to the original AOS/DOS intersection of figure~\ref{fig:columnaisaos}(b), it is advantageous to obtain a set of operating constraints that are fully feasible in both the input and output space.
-
-\subsubsection{High and low limits}
-A simple approach to obtain a set of feasible constraints is by fitting high and low limits within the AOS/DOS intersection.
-Figure~\ref{fig:columnfitbox} shows the fitting of the largest set of this type as a dark dashed box.
- 
-\begin{figure}[htbp]
-  \centering
-    \includegraphics[width=8cm]{columnfitbox.pdf}
-  \caption[Fitted constraints for the laboratory distillation column]{Intersection of AOS and DOS with fitted high and low limits for the column tray temperatures.}
-  \label{fig:columnfitbox}
-\end{figure}
-
-This set is directly applicable to commercial MPC packages as only high and low limits on the original variables are present.
-It can, however, be noted that only a fraction of the intersection is covered.
-This problem worsens as the irregularity of the intersection increases.
-
-\subsubsection{Constraint reformatting}
-Rather than using the high and low limits shown in figure~\ref{fig:columnfitbox}, the constraints describing the whole intersection can be used to maximise the operating region.
-This set of constraints need to be reformatted to be compatible with commercial MPC packages, as they only accept high and low limits on variables.
-
-The dark triangle in figure~\ref{fig:columnfitbox} represents the constraints defining the intersection.
-An unmeasured variable needs to be added to the process model to implement the diagonal constraint ($0.88T_8-0.47T_1\leq 36.56$~\textcelsius).
-Naming the new output $y_1$ and augmenting the process model matrix as shown in equation~\ref{eq:columnnewmodel} allows for the diagonal (linear) constraint to be expressed simply as {$y_1~\leq~36.56$~\textcelsius}.
-\begin{equation}
-  \label{eq:columnnewmodel}
-  G_{new}= \bpm -0.0575 & 0.96 \\       % T1
-                  -0.146  & 0.518 \\      % T8
-                   0.0956 & 1.30 \\ \epm  %y1
-\end{equation}
-
-\subsubsection{Set reduction}
-When the intersection of the DOS and AOS contains many facets (as is typically the case for higher order systems), a large increase in model variables as well as constraints are needed to describe the complete intersection.
-
-In this case, fitting a constraint set with fewer constraints than the original intersection, while still maximising the operational region, can be considered.
-Whilst not illustrated in this paper, it is intuitive that the fraction of the intersection that will be covered is less than 1.
-The set reduction procedure therefore becomes a trade-off between the operability obtained and the simplification of the control problem.
-
-\subsection{Constraint changes}
-It is typical of operators to change constraints during the operation of processes.
-Usually, constraints are tightened on outputs or inputs.
-It is intuitive that constraint tightening in the output space has a corresponding tightening effect in the input space, but the extent thereof isn't immediately clear.
-The same reasoning applies to the changing of input constraints.
-
-As an example, a change from the full intersection constraints to the fitted upper and lower bounds of figure~\ref{fig:columnfitbox} are considered and the effect of this constraint change in the input space investigated.
-Figure~\ref{fig:columnconsinput}(a) shows the original AIS and DIS.
-It is clear that the limits of the DOS -- now represented in the input space as the DIS -- are unattainable.
-
-The effect of the constraint change is shown in figure~\ref{fig:columnconsinput}(b) as the transition from the dotted triangular constraint set to the parallelogram shaped dashed set.
-From equation~\ref{eq:inputclamp} this corresponds to a 50\% clamping in the input space.
-
-\begin{figure}[htbp]
-  \centering
-    \includegraphics[width=8cm]{columninputs.pdf}
-    \includegraphics[width=8cm]{columninputszoom.pdf}
-  \caption{Constraints in the input space for the column (a) and focus on the constraint changes showing input clamping (b).}
-  \label{fig:columnconsinput}
-\end{figure}
-
-This figure also serves to confirm that the newly fitted constraints on the outputs correspond to a fully attainable region in the input space.
-
-
-\subsection{MPC interfacing}
-As with the level and flow rig, the operator interfaces (figures and ) are used to set the constraints for the system.
-The modelling interfaces (figures and ) are used to augment the model for the addition of unmeasured variables.
-
 
 \section{Conclusions}\label{sec:conclusions}
-From the proposed method of systematic constraint handling and the illustrative example, a few conclusions can be drawn.
-The results obtained by the method are readily applicable to commercial MPCs.
+From the proposed method of systematic constraint handling and the illustrative example, the conclusions can be drawn:
+\begin{itemize}
+  \item Checking constraints via the process model can identify constraints which are not attainable and should be revised.
+  \item The constraints describing the AOS and DOS intersection represent the largest operating region for the given input and output constraints.
+Reformatting these (typically linear combination) constraints by adding unmeasured variables to the process model allow for direct implementation in the high and low limit structure of commercial MPC interfaces.
+  \item When constraint changes are made (during operation or design), checking changes to constraints via the process model allows for a measure of clamping (or relaxing) to be determined.
+This serves to inform about the resulting effect of changing constraints and can guide design or operation decisions.
+\end{itemize}
 
-The specification of unrealistic constraints lead to a low Operability Index and unattainable expectations of both the inputs and outputs of the process.
-Checking constraints via the process model can identify constraint sets that are not attainable.
-
-Disambiguating the language used in specifying constraints, allow for identification of constraints that can be adjusted to increase process operability.
+Finally, disambiguating the language used in specifying constraints, allow for identification of constraints that can be adjusted to increase process operability.
 In the case of a process still in the design phase, the specific effect of constraints on variables can be used as a guide for possible design modifications. 
-
-The constraints that describe the AOS/DOS intersection, represents the largest operating region for the given input and output constraints.
-The constraints describing this intersection are usually linear combinations of variables and can be reformatted to conform to commercial MPC interfaces.
-An unmeasured variable (resultant from the linear constraint) is added to the process model, and high and low constraints are imposed thereon.
-
-The fitting of a constraint set within the AOS/DOS intersection leads to an operating region that is completely feasible in both the input and output space.
-The size of a constraint set can be reduced by fitting a smaller set within, while maximising the operating region of the fitted set.
-This reduces the control problem by reducing the number of active constraints on the system.
-
-Finally, when constraint changes are made (during operation or design), checking changes to constraints via the process model allows for a measure of clamping to be determined.
-This serves to inform operators of the resulting effect of changing constraints and guides design decisions.
-
 
 %% ==== TAIL ====
 \bibliographystyle{model4-names}
