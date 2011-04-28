@@ -1,6 +1,11 @@
 %\documentclass[preprint,authoryear,12pt]{elsarticle}
 \documentclass[final,authoryear,5pt,times,twocolumn]{elsarticle}
 
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfrealjobname{article}
+%TODO - remove \usepackage (convert images to pdf/eps)
+
 \usepackage{amssymb}
 \usepackage{amsmath}
 \usepackage{booktabs}
@@ -299,7 +304,10 @@ The column is run as a closed system with bottoms and distillate mixed and fed b
 Figure~\ref{fig:columnpfd} shows a simplified process flow diagram of the column.
 \begin{figure}[htbp]
   \centering
-    \includegraphics{figure1.pdf}
+    %\includegraphics[width=8cm]{columnpfd.pdf}
+    \beginpgfgraphicnamed{figure1}
+    \scalebox{1}{\input{columnpfd}}
+    \endpgfgraphicnamed
   \caption[Laboratory distillation column photo and flow diagram]{Laboratory distillation column flow diagram.}
   \label{fig:columnpfd}
 \end{figure}
@@ -344,9 +352,19 @@ The DOS, as described by the operating range of the outputs, is also shown in fi
 
 \begin{figure}[htbp]
   \centering
-    \includegraphics{figure2a.pdf}
-    \includegraphics{figure2b.pdf}
-    \includegraphics{figure2c.pdf}
+    %\includegraphics[width=8cm]{columnais.pdf}
+    %\qquad
+    %\includegraphics[width=8cm]{columnaos.pdf}
+    %\includegraphics[width=8cm]{columnaosfocus.pdf}
+    \beginpgfgraphicnamed{figure2a}
+    \scalebox{1}{\input{columnais}}
+    \endpgfgraphicnamed
+    \beginpgfgraphicnamed{figure2b}
+    \scalebox{1}{\input{columnaos}}
+    \endpgfgraphicnamed
+    \beginpgfgraphicnamed{figure2c}
+    \scalebox{1}{\input{columnaosfocus}}
+    \endpgfgraphicnamed
   \caption{AIS (a), AOS and DOS (b), and AOS$\cap$DOS (c) showing a very small operating region.}
   \label{fig:columnaisaos}
 \end{figure}
@@ -381,7 +399,10 @@ This smaller constraint set will have a clamping effect on the input constraints
 
 \begin{figure}[htbp]
   \centering
-    \includegraphics{figure3.pdf}
+    %\includegraphics[width=8cm]{columnfitbox.pdf}
+    \beginpgfgraphicnamed{figure3}
+    \scalebox{1}{\input{columnfitbox}}
+    \endpgfgraphicnamed
   \caption[Fitted constraints for the laboratory distillation column]{Intersection of AOS and DOS with fitted high and low limits for the column tray temperatures.}
   \label{fig:columnfitbox}
 \end{figure}
@@ -393,8 +414,14 @@ From equation~\ref{eq:inputclamp} this corresponds to a 50\% clamping in the inp
 
 \begin{figure}[htbp]
   \centering
-    \includegraphics{figure4a.pdf}
-    \includegraphics{figure4b.pdf}
+    \beginpgfgraphicnamed{figure4a}
+    \scalebox{1}{\input{columninputs}}
+    \endpgfgraphicnamed
+%    \includegraphics[width=8cm]{columninputs.pdf}
+%    \includegraphics[width=8cm]{columninputszoom.pdf}
+    \beginpgfgraphicnamed{figure4b}
+    \scalebox{1}{\input{columninputszoom}}
+    \endpgfgraphicnamed
   \caption{Constraints in the input space for the column (a) and focus on the constraint changes showing input clamping (b).}
   \label{fig:columnconsinput}
 \end{figure}
