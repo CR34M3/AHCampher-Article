@@ -43,7 +43,7 @@ Certain MPC algorithms allow constraints  to be imposed on the inputs or outputs
 Consistent constraint handling methods -- which account for their interdependence and disambiguate the language used to specify constraints -- would therefore be an attractive addition to any MPC package.
 
 A rigorous and systematic approach to constraint management is proposed, building on the work of \citet{vinsonartoi} in interpreting constraint interactions. 
-The method focuses on linear steady-state system models, and provides routines to obtain the following information; effects of constraint changes on the corresponding input or output constraints, feasibility checks for constraints, constraint-type information, specification of constraint-set size and optimal fitting of constraints within the desirable input or output space.
+The method focuses on linear steady-state system models, and provides routines to obtain the following information: effects of constraint changes on the corresponding input or output constraints, feasibility checks for constraints, constraint-type information, specification of constraint-set size and optimal fitting of constraints within the desirable input or output space.
 
 Mathematical rigour and unambiguous language for identifying constraint types were key design criteria. 
 The application of the method is illustrated for a laboratory scale distillation column running commercial MPC packages.
@@ -60,8 +60,9 @@ constraint handling \sep model predictive control \sep geometric methods \sep op
 
 %% ==== BODY ====
 \section{Introduction}\label{sec:intro}
-The ability of some MPC algorithms to impose constraints on the outputs or inputs of a system is their biggest selling point.
-Just as the process model predicts the effect of the inputs on the outputs, the constraints imposed on the system are also interdependent (via the process model).
+Model predictive controllers use process models to predict the effect of the inputs of a system on its outputs.
+The ability of some MPC algorithms to impose constraints on the outputs or inputs is their biggest selling point.
+These constraints are also interdependent via the process model.
 
 At present, commercial MPC packages only validate constraints against high and low limits set by external engineering criteria that are not based on the process model.
 This gives rise to the following problems, both of which could result in infeasible controllers and unrealistic control expectations:
@@ -75,7 +76,7 @@ Building on the work by \citet{vinsonartoi}, \citet{opconproc} and \citet{limaph
 
 Mathematical rigour and unambiguous language when specifying constraints were key design criteria.
 Linear steady-state models are considered along with linear constraints on the inputs and outputs.
-With the scope defined thus, the project can now focus exclusively on convex sets in the input and output space.
+This paper will therefore focus only on convex sets in the input and output space.
 
 
 \section{Background}\label{sec:background}
@@ -99,8 +100,8 @@ From this it also follows that the intersection of such convex polytopes will be
 This is due to the resulting intersection being merely a subset of the half-spaces defining the two intersecting polytopes.
 
 \subsubsection{Constraint Formulation}
-Constraints on the inputs ($\vect{u}$) or outputs ($\vect{y}$) of a system can be represented as sets of linear inequalities.
-For the most general case, they can be expressed as follows;
+Constraints on the inputs ($\vect{u}$) or outputs ($\vect{y}$) of a system can be represented as sets of inequalities.
+For the most general linear case, they can be expressed as follows;
 \begin{align}
   \label{eq:gencons}
   A_u\vect{u}_k &\leq b_u \\ \notag
@@ -124,12 +125,14 @@ For this reason the convex hull of $P$ and the half-spaces used to generate $P$ 
 \subsubsection{Process models}
 The steady-state model of a linear system is the gain-matrix.
 This is simply a matrix of constants in $\mathbb{R}$.
-Models like these allow for matrix algebra when transforming between the input and output spaces (and vice versa).
-Obtaining the AOS from the AIS is a linear transformation \citep[48-49,~166]{leung} corresponding to a matrix multiplication of the vertices of the AIS and the process model matrix.
+With this model matrix, obtaining the output space from the input space is a linear transformation \citep[48-49,~166]{leung} corresponding to a matrix multiplication of the vertices of the input space and the process model matrix.
+This same property holds when transforming back to the input space from the output space.
 
 Using linear models, the surface (or boundary) of the input space (a polytope) maps directly to the surface of the output space.
 For this reason, the constraints specifying the input space can be used to generate the output space with full mathematical rigour.
 
+Since the process model (gain-matrix) operates on and outputs deviation variables, a steady-state offset is added to produce absolute values.
+This offset is calculated from the center of the input space and corresponds to the nominal point at which the process model is linearised.
 
 \subsection{Model Predictive Control}
 Since its successful implementation in the petrochemical industry, model predictive control (MPC) has gained widespread acceptance in the processing sector \citep[1]{maciejowskimpc}. 
@@ -139,10 +142,9 @@ The correct choice of model is one of the most important steps in the operation 
 This is due to the active use of the model in making predictions as the controller runs, and not serving merely as an analysis aid \citep[37]{maciejowskimpc}.
 
 \subsubsection{Constraints}\label{sec:mpccons}
+Most commercial MPC packages allow only high and low limits to be imposed on outputs or inputs.
 The only validation of these constraints are against an outermost constraint set, often referred to as 'Engineering Limits'.
 This set typically consists of physical limits on inputs and outputs, as well as limits that avoid damage to equipment.
-
-Most commercial MPC packages allow only high and low limits to be imposed on outputs or inputs.
 
 \subsection{Process Operability}
 Process operability is defined as ``the ease with which a process can be operated and controlled'' \citep[778]{marlin}.
@@ -170,7 +172,8 @@ This expansion allowed for the calculation of MV saturation limits and system re
 Singular value decomposition stems from the use of eigenvalues as an operability measure. 
 The use of singular values are preferred as eigenvalues are a poor
 measure of gain and can often be misleading \citep[75]{skogestad}.
-Maximum and minimum singular values are mostly used to select controlled variables but can also be used as a performance measure along with the condition number \citepp{596}{luyben}{80-82}{skogestad}.
+Maximum and minimum singular values are mostly used to determine good input and output pairings as they characterise the directionality of these pairs.
+Along with the condition number, singular values can also be used as a performance measure \citepp{596}{luyben}{80-82}{skogestad}.
 
 \subsubsection{Operability Index}
 The Operability Index (OI) of \citet{vinsonartoi} provides a single-number measure of operability which is independent of the implemented control system of a process.
@@ -189,7 +192,7 @@ Therefore, a point $u$ in the AIS corresponds to a point $y$ in the AOS via $y=G
   \item [Desired Output Space (DOS);] this represents the desired output values of the process. 
 These values are typically based on operational and financial   parameters. 
   \item [Expected Disturbance Space (EDS);] all the values of the expected disturbances to the system. 
-These values are translated back to the input space by means of a disturbance model.
+The effects of the disturbances on the inputs are translated back to the input space by means of a disturbance model.
   \item [Desired Input Space (DIS);] in the same manner that the AIS maps to the AOS, the DIS represents combined reverse mappings of the DOS and EDS.
 The DIS is calculated as the inputs, $u$, that satisfy the model, i.e. $y=G(u,d)$ (with $y$ and $d$ from the DOS and EDS respectively).
 \end{description}
@@ -283,7 +286,7 @@ The following set of constraint types (based on the sources of constraints) are 
   \item [Operational constraints] are the innermost constraint set used by the MPC controller.
   These constraints are typically changed using the operator interfaces of MPCs and are contained within their respective variables' physical and quality constraints.
   \item [Optimisation constraints] are those constraints that are not critical for the control of the plant, but rather the performance and efficiency of the plant as determined by external cost functions.
-  Typically these external cost functions will represent a type of saving, e.g. energy savings or product give-away reduction.
+  Typically these external cost functions will represent a cost benefit, e.g. energy savings or product give-away reduction.
 \end{description}
 
 The specification of spaces, in particular the AIS and the DOS, usually consists of a combination of the constraint types mentioned above.
@@ -424,9 +427,9 @@ From the proposed method of systematic constraint handling and the illustrative 
 \begin{itemize}
   \item Checking constraints via the process model can identify constraints which are not attainable and should be revised.
   \item The constraints describing the AOS and DOS intersection represent the largest operating region for the given input and output constraints.
-Reformatting these (typically linear combination) constraints by adding unmeasured variables to the process model allow for direct implementation in the high and low limit structure of commercial MPC interfaces.
+By adding unmeasured variables to the process model, these linear constraints can be reformatted and directly applied in the high and low limit structure of commercial MPC interfaces.
   \item When constraint changes are made (during operation or design), checking changes to constraints via the process model allows for a measure of clamping (or relaxing) to be determined.
-This serves to inform about the resulting effect of changing constraints and can guide design or operation decisions.
+This highlights the effect of changing constraints and can guide design or operation decisions.
 \end{itemize}
 
 Finally, disambiguating the language used in specifying constraints, allow for identification of constraints that can be adjusted to increase process operability.
