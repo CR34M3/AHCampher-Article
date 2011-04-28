@@ -35,7 +35,7 @@
 
 \cortext[cor1]{Corresponding author\\Tel.: +27 12 420 2197; Fax: +27 12 420 5048}
 
-\address{Department of Chemical Engineering, University of Pretoria, Pretoria 0001, South Africa}
+\address{Department of Chemical Engineering, University of Pretoria, Pretoria, 0001, South Africa}
 
 \begin{abstract}
 The models used by model predictive controllers (MPCs) to predict future outcomes are usually unconstrained forms like impulse or step responses and discrete state space models. 
@@ -61,7 +61,7 @@ constraint handling \sep model predictive control \sep geometric methods \sep op
 %% ==== BODY ====
 \section{Introduction}\label{sec:intro}
 Model predictive controllers use process models to predict the effect of the inputs of a system on its outputs.
-The ability of some MPC algorithms to impose constraints on the outputs or inputs is their biggest selling point.
+The ability of some MPC algorithms to impose constraints on the outputs or inputs is one of their biggest selling points.
 These constraints are also interdependent via the process model.
 
 At present, commercial MPC packages only validate constraints against high and low limits set by external engineering criteria that are not based on the process model.
@@ -131,7 +131,7 @@ This same property holds when transforming back to the input space from the outp
 Using linear models, the surface (or boundary) of the input space (a polytope) maps directly to the surface of the output space.
 For this reason, the constraints specifying the input space can be used to generate the output space with full mathematical rigour.
 
-Since the process model (gain-matrix) operates on and outputs deviation variables, a steady-state offset is added to produce absolute values.
+Since the process model (gain-matrix) operates on, and outputs, deviation variables, a steady-state offset is added to produce absolute values.
 This offset is calculated from the center of the input space and corresponds to the nominal point at which the process model is linearised.
 
 \subsection{Model Predictive Control}
@@ -198,13 +198,14 @@ The DIS is calculated as the inputs, $u$, that satisfy the model, i.e. $y=G(u,d)
 \end{description}
 
 \citet{vinsonartoi} proceed to define the generalised Output Operability Index (OOI) as shown in equation~\ref{eq:oi}. 
-From this definition it is clear that the controlability of a process decreases if the DOS does not cover the whole AOS. 
-Servo- and regulatory operability indices are also defined in the text, but are not shown here.
 \begin{equation}
   \label{eq:oi}
      OOI \triangleq \frac{\mu(AOS\cap DOS)}{\mu(DOS)}
 \end{equation}
 where $\mu$ represents a function to calculate the hypervolume of a space.
+
+From this definition it is clear that the controlability of a process decreases if the DOS does not cover the whole AOS. 
+Servo- and regulatory operability indices are also defined in the text, but are not shown here.
 
 Numerous authors have illustrated the application of the operability index. 
 \citet{opconproc} focus on a general application of the OI, emphasising its ability to identify inoperable processes without the need to specify a controller structure. 
@@ -275,7 +276,7 @@ where $\mu$ is a function to calculate the hypervolume of a space.
 
 \subsection{Constraint types}\label{sec:contypes}
 When constraints are considered, and specifically changes to them, the types of constraints present are important.
-This is due to the direction of change allowed by each constraint type.
+This is due to the direction of change allowed for each constraint type.
 The following set of constraint types (based on the sources of constraints) are proposed to disambiguate the specification of constraints.
 \begin{description}
   \item [Physical constraints] represent the physical limits of the system.
@@ -294,6 +295,8 @@ Commercial MPCs do not typically distinguish between different types of constrai
 
 
 \section{2$\times$2 Distillation Column Example}\label{sec:dist}
+The method proposed in the preceding section is now illustrated for a practical system.
+Even though the method applies to higher order systems, a $2 \times 2$ system is considered to ease graphical representation.
 \subsection{Process Description}
 The example case study is a 10-plate distillation column from the Process Modelling and Control laboratory of the University of Pretoria.
 The column is run as a closed system with bottoms and distillate mixed and fed back into the column.
@@ -307,7 +310,7 @@ Figure~\ref{fig:columnpfd} shows a simplified process flow diagram of the column
 \end{figure}
 
 The process model has been reduced to a $2\times2$ matrix.
-Reflux flowrate ($R$, expressed as the milliamp signal to the control valve) and the setpoint of plate 10's temperature ($T_{10~sp}$) are the inputs, with the temperatures of plate 1 and 8 ($T_1\text{ \& }T_{8}$) as the outputs.
+Reflux flowrate ($R$, expressed as the milliamp signal to the control valve) and the setpoint of plate 10's temperature ($T_{10~sp}$) are the inputs, with the temperatures of plate 1 and 8 ($T_1\text{ and }T_{8}$) as the outputs.
 The temperature controller between $T_{10~sp}$ and $Q$ is part of the column's baselayer controls and was added as a safety measure, should the advanced control layer fail.
 
 Equation~\ref{eq:columnmodel} shows the steady-state gain model ($G$) of the column.
@@ -371,8 +374,8 @@ This region is described by the following constraints:
 \end{align*}
 
 This set of constraints need to be reformatted to be compatible with commercial MPC packages, as they only accept high and low limits on variables.
-An unmeasured variable needs to be added to the process model to implement the diagonal constraint ($0.88T_8-0.47T_1\leq 36.56$~\textcelsius).
-Defining the new output $y_1$ and augmenting the process model (equation~\ref{eq:columnmodel}) as per equation~\ref{eq:linconoutput} results in the new process model (equation~\ref{eq:columnnewmodel}) shown below. With the new process model defined thus, the diagonal constraint to be expressed simply as {$y_1~\leq~36.56$~\textcelsius}.
+An unmeasured variable is added to the process model to implement the diagonal constraint ($0.88T_8-0.47T_1\leq 36.56$~\textcelsius).
+Defining the new output $y_1$ and augmenting the process model (equation~\ref{eq:columnmodel}) as per equation~\ref{eq:linconoutput} results in the new process model (equation~\ref{eq:columnnewmodel}) shown below. With the new process model defined thus, the diagonal constraint can be expressed as {$y_1~\leq~36.56$~\textcelsius}.
 \begin{equation}
   \label{eq:columnnewmodel}
   G_{new}= \bpm -0.0575 & 0.96 \\       % T1
@@ -423,7 +426,7 @@ This highlights the importance of constraint and model interaction, as changing 
 
 
 \section{Conclusions}\label{sec:conclusions}
-From the proposed method of systematic constraint handling and the illustrative example, the conclusions can be drawn:
+From the proposed method of systematic constraint handling and the illustrative example, these conclusions can be drawn:
 \begin{itemize}
   \item Checking constraints via the process model can identify constraints which are not attainable and should be revised.
   \item The constraints describing the AOS and DOS intersection represent the largest operating region for the given input and output constraints.
