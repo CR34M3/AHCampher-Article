@@ -43,7 +43,7 @@ Certain MPC algorithms allow constraints  to be imposed on the inputs or outputs
 Consistent constraint handling methods -- which account for their interdependence and disambiguate the language used to specify constraints -- would therefore be an attractive addition to any MPC package.
 
 A rigorous and systematic approach to constraint management is proposed, building on the work of \citet{vinsonartoi} in interpreting constraint interactions. 
-The method focuses on linear steady-state system models, and provides routines to obtain the following information: effects of constraint changes on the corresponding input or output constraints, feasibility checks for constraints, constraint-type information, specification of constraint-set size and optimal fitting of constraints within the desirable input or output space.
+The method focuses on linear steady-state system models, and provides routines to obtain the following information: effects of constraint changes on the corresponding input or output constraints, feasibility checks for constraints and constraint-type information.
 
 Mathematical rigour and unambiguous language for identifying constraint types were key design criteria. 
 The application of the method is illustrated for a laboratory scale distillation column running commercial MPC packages.
@@ -143,7 +143,7 @@ This is due to the active use of the model in making predictions as the controll
 
 \subsubsection{Constraints}\label{sec:mpccons}
 Most commercial MPC packages allow only high and low limits to be imposed on outputs or inputs.
-The only validation of these constraints are against an outermost constraint set, often referred to as 'Engineering Limits'.
+The only validation of these constraints is against an outermost constraint set, often referred to as 'Engineering Limits'.
 This set typically consists of physical limits on inputs and outputs, as well as limits that avoid damage to equipment.
 
 \subsection{Process Operability}
@@ -204,7 +204,7 @@ The DIS is calculated as the inputs, $u$, that satisfy the model, i.e. $y=G(u,d)
 \end{equation}
 where $\mu$ represents a function to calculate the hypervolume of a space.
 
-From this definition it is clear that the controlability of a process decreases if the DOS does not cover the whole AOS. 
+From this definition it is clear that the operability of a process decreases if the DOS does not cover the whole AOS. 
 Servo- and regulatory operability indices are also defined in the text, but are not shown here.
 
 Numerous authors have illustrated the application of the operability index. 
@@ -228,7 +228,7 @@ Operating regions, such as the DOS, are usually specified using external require
 The validity of such a space should be checked against the attainable regions of the corresponding inputs or outputs.
 In this respect, determining the Operability Index provides a good measure of how valid a specified operating region is.
 
-The same argument for feasible constraints apply to setpoints.
+The same argument for feasible constraints applies to setpoints.
 The specification of setpoints should be checked to be within the attainable output space for a given available input space.
 
 \subsection{MPC interfacing}\label{sec:lincons}
